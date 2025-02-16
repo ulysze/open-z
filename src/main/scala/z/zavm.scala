@@ -15,21 +15,21 @@ package z
 // Tout tes produits, etc.
 
 enum Protocol:
-    case Layer7(applicationProtocol: ApplicationProtocol)
+   case Layer7(applicationProtocol: ApplicationProtocol)
 
 enum ApplicationProtocol:
-    case HTTP
-    case FTP
-    case WebSocket
-    case gRPC
+   case HTTP
+   case FTP
+   case WebSocket
+   case gRPC
 
 trait Interface
 trait Infrastructure[A, B](verifier: Function[A, B])
 
 // -> Ce qui nous interesse de figurer dans les contrats. (ce sont les elements de base bien sur)
 enum Contractualizable:
-    case Interface
-    case Infrastructure
+   case Interface
+   case Infrastructure
 
 // -> etc. On ne créer pas encore des instances de Ceux-ci... -> Car on devra les compléter manuellement.
 // -> Faire en sorte que l'on puisse créer des instance de ceux-ci! -> Sous certaines conditions, etc.
@@ -40,9 +40,7 @@ enum Contractualizable:
 val pr = Protocol.Layer7(ApplicationProtocol.HTTP)
 
 // pretty big trait.
-trait Technology(
-    interfaces: List[Interface]
-) // -> Publiquement, on dit au developers qu'il ENREGISTRE des TECHNOLOGIES! (car il
+trait Technology(interfaces: List[Interface]) // -> Publiquement, on dit au developers qu'il ENREGISTRE des TECHNOLOGIES! (car il
 
 // Logique: Chaque fois qu'il y a un nouveau Contrat -> Créer une instance d'un contrat -> Utilisation des implicites et TypeClasses given les
 // types, etc! -> Pareil pour le register d'un nouvelle TECHNOLOGY.
@@ -52,11 +50,9 @@ trait Technology(
 
 trait Contract
 
-/** Fonction qui permet de scanner une Technologie, -> Et basé la dessus, (sur son interface) Chaque
-  * technologie Peut avoir plusieurs interfaces CONTRACTABLE! -> C'est seulement ce QUI NOUS
-  * INTERESSE. -> Ce que l'on veut Contractualiser. -> ET h50x offre PLUSIEURS MOYENS!! -> LEverage
-  * de l'infrastructure PHYSIQUE AUSSI!
+/** Fonction qui permet de scanner une Technologie, -> Et basé la dessus, (sur son interface) Chaque technologie Peut avoir
+  * plusieurs interfaces CONTRACTABLE! -> C'est seulement ce QUI NOUS INTERESSE. -> Ce que l'on veut Contractualiser. -> ET h50x
+  * offre PLUSIEURS MOYENS!! -> LEverage de l'infrastructure PHYSIQUE AUSSI!
   */
 
-def scanTechnology() =
-    ???
+def scanTechnology() = ???

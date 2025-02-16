@@ -1,2 +1,3 @@
 package z
 
+object Generatorz

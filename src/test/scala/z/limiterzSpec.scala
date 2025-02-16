@@ -1,47 +1,28 @@
 package z
 
+import zio._
 import zio.test._
 import zio.test.Assertion._
-import zio._
+import zio.test.TestAspect._
 
-/**
-  * The CacheSpec object defines unit tests for the Cache data structure 
-  * using ZIO Test. These tests ensure that items stored in the cache 
-  * can be retrieved before their expiration time, and that they are 
-  * unavailable after their expiration time.
-  */
-object CacheSpec extends ZIOSpecDefault:
-    /**
-      * The 'spec' method aggregates all tests for the Cache functionality:
-      *
-      * 1) "availible before expiration": Ensures that an item added to the 
-      *    cache can still be retrieved before the expiration period ends.
-      * 2) "unavailible after expiration": Confirms that an item is no longer 
-      *    available once its expiration time has passed.
-      */
+object limiterzSpec extends ZIOSpecDefault:
     def spec: Spec[TestEnvironment & Scope, Any] = 
-        /**
-          * This test stores an item in the cache with a 30-minute expiration 
-          * time and attempts to retrieve it immediately to assert successful 
-          * completion, verifying the cache works correctly before expiration.
-          */
-        test("availible before expiration"):
-            for {
-                cache <- Cache.make[Int, String](30.minutes)
-                _ <- cache.add(3, "Password")
-                _ <- cache.retrieve(3)
-            } yield assertCompletes
+        suite("Rate Limiter"):
+            test("allows operations when possible"):
+                for {
+                    rateLimiter <- RateLimiter.make(1000, 10.seconds, RateLimitingContext.Default)
+                    limitedEffect = rateLimiter.acquire *> ZIO.sleep(10.minutes) *> Console.printLine("Complete!")
+                    _ <- ZIO.foreachPar(List.fill(1000)(()))(i => limitedEffect) <&> TestClock.adjust(1.second.plus(10.minutes))
+                } yield assertCompletes
 
-        /**
-          * This test stores an item in the cache with a 2-hour expiration time, 
-          * advances the test clock by 2 hours, and then checks if the item 
-          * is still in the cache. As it should be expired, the test asserts 
-          * the item is no longer available.
-          */
-        test("unavailible after expiration"):
-            for {
-                cache <- Cache.make[Int, String](2.hours)
-                _ <- cache.add(12, "Personal Informations")
-                _ <- TestClock.adjust(2.hours)
-                b <- cache.contains(12)
-            } yield assertTrue(!b)
+object ListSpec extends ZIOSpecDefault:
+    def reverseList[T](l: List[T]): List[T] = 
+        l.reverse
+    def spec: Spec[TestEnvironment & Scope, Any] = 
+        test("reverse stays same"):
+            check(Gen.listOf(Gen.asciiString)): 
+                list => 
+                    val same = reverseList(reverseList(list))
+                    assert(same)(equalTo(same))
+
+            
