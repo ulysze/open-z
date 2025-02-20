@@ -50,8 +50,8 @@ trait Technology(interfaces: List[Interface]) // -> Publiquement, on dit au deve
 
 trait Contract
 
-/** Fonction qui permet de scanner une Technologie, -> Et basé la dessus, (sur son interface) Chaque technologie Peut avoir plusieurs interfaces CONTRACTABLE! -> C'est
-  * seulement ce QUI NOUS INTERESSE.
+/** Fonction qui permet de scanner une Technologie, -> Et basé la dessus, (sur son interface) Chaque technologie Peut avoir plusieurs interfaces CONTRACTABLE! -> C'est seulement ce
+  * QUI NOUS INTERESSE.
   * -> Ce que l'on veut Contractualiser. -> ET h50x offre PLUSIEURS MOYENS!! -> LEverage de l'infrastructure PHYSIQUE AUSSI!
   */
 
