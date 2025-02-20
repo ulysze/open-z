@@ -11,6 +11,7 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "2.1.15",
       "dev.zio" %% "zio-test"          % "2.1.15" % Test,
-      "dev.zio" %% "zio-test-sbt"      % "2.1.15" % Test
+      "dev.zio" %% "zio-test-sbt"      % "2.1.15" % Test,
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0"
     )
   )

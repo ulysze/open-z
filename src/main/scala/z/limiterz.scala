@@ -23,45 +23,44 @@ import java.util.UUID
   *   The context in which rate limiting is applied.
   */
 case class RateLimiter private (rateLimit: Int, maxWaitingTime: Duration, queue: Queue[Unit], context: RateLimitingContext):
-   /** Attempts to acquire a token from the rate limiter. If the queue is full, a [[FullRateLimiterException]] is thrown.
-     * Otherwise, one token is removed from the queue.
-     *
-     * @return
-     *   An IO effect that fails with [[FullRateLimiterException]] if the queue is full, or succeeds with `Unit` when a token is
-     *   acquired.
-     */
-   def acquire: ZIO[Any, FullRateLimiterException, Unit] = queue
-      .take
-      .timeout(maxWaitingTime)
-      .someOrFail(new FullRateLimiterException(context))
+        /** Attempts to acquire a token from the rate limiter. If the queue is full, a [[FullRateLimiterException]] is thrown.
+          * Otherwise, one token is removed from the queue.
+          *
+          * @return
+          *   An IO effect that fails with [[FullRateLimiterException]] if the queue is full, or succeeds with `Unit` when a token
+          *   is acquired.
+          */
+        def acquire: ZIO[Any, FullRateLimiterException, Unit] = queue
+                .take
+                .timeout(maxWaitingTime)
+                .someOrFail(new FullRateLimiterException(context))
 
 /** Companion object for [[RateLimiter]], providing a constructor method to create new instances.
   */
 object RateLimiter:
-   /** Creates a new [[RateLimiter]] with the specified parameters, returning a ZIO effect.
-     *
-     * @param rateLimit
-     *   The maximum number of tokens available per time interval.
-     * @param maxWaiting
-     *   The maximum number of requests that can wait in the queue.
-     * @param context
-     *   The context in which rate limiting is applied.
-     * @return
-     *   An IO effect that fails with [[IllegalArgumentException]] if `rateLimit` is not strictly positive, or succeeds with a
-     *   [[RateLimiter]] instance once initialized.
-     */
-   def make(rateLimit: Int, maxWaitingTime: Duration, context: RateLimitingContext): IO[IllegalArgumentException, RateLimiter] =
-      def fill(q: Queue[Unit]): UIO[Unit] =
-         for
-            size <- q.size
-            _ <- q.offerAll(List.fill(q.capacity - size)(())).delay(1.second)
-         yield ()
-      for {
-         _ <- requireZ(rateLimit > 0, "Rate Limit must be strictly positive")
-         q <- Queue.bounded[Unit](rateLimit)
-         _ <- ZIO.unit <&! fill(q).forever
-      } yield new RateLimiter(rateLimit, maxWaitingTime, q, context)
-
+        /** Creates a new [[RateLimiter]] with the specified parameters, returning a ZIO effect.
+          *
+          * @param rateLimit
+          *   The maximum number of tokens available per time interval.
+          * @param maxWaiting
+          *   The maximum number of requests that can wait in the queue.
+          * @param context
+          *   The context in which rate limiting is applied.
+          * @return
+          *   An IO effect that fails with [[IllegalArgumentException]] if `rateLimit` is not strictly positive, or succeeds with
+          *   a [[RateLimiter]] instance once initialized.
+          */
+        def make(rateLimit: Int, maxWaitingTime: Duration, context: RateLimitingContext) =
+                def fill(q: Queue[Unit]): UIO[Unit] =
+                        for {
+                                size <- q.size
+                                _ <- q.offerAll(List.fill(q.capacity - size)(())).delay(1.second)
+                        } yield ()
+                for {
+                        _ <- requireZ(rateLimit > 0, "Rate Limit must be strictly positive")
+                        q <- Queue.bounded[Unit](rateLimit)
+                        _ <- ZIO.unit <&! fill(q).forever
+                } yield new RateLimiter(rateLimit, maxWaitingTime, q, context)
 
 /** Defines the context in which rate limiting is applied.
   *
@@ -70,23 +69,23 @@ object RateLimiter:
   *   - [[RateLimitingContext.Spatial]]: A specific region and location.
   */
 enum RateLimitingContext:
-   case Default
-   case Spatial(region: Region, location: Location)
+        case Default
+        case Spatial(region: Region, location: Location)
 
 /** Represents a geographical region for spatial rate limiting.
   */
 enum Region:
-   case Europe,
-      Asia,
-      USA
+        case Europe,
+                Asia,
+                USA
 
 /** Represents a specific city or location within a region.
   */
 enum Location:
-   case Paris,
-      London,
-      Tokyo,
-      NewYork
+        case Paris,
+                London,
+                Tokyo,
+                NewYork
 
 /** Base class for all errors related to rate limiting.
   */
@@ -100,4 +99,4 @@ abstract class RateLimiterException extends Throwable
   *   The type of the context
   */
 case class FullRateLimiterException(context: RateLimitingContext) extends RateLimiterException:
-   override def getMessage: String = s"Rate Limiter for $context: Maximum waiting requests reached!"
+        override def getMessage: String = s"Rate Limiter for $context: Maximum waiting requests reached!"
