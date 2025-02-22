@@ -5,8 +5,8 @@ import scala.collection._
 import z.Wexecutors._
 import z.Preconditionz._
 
-/** A generic cache with a time-to-live (TTL) mechanism. This cache stores key-value pairs along with their insertion timestamp. Items can be added, retrieved, and checked for
-  * existence. Expired items are automatically removed by a background expiration daemon.
+/** A generic cache with a time-to-live (TTL) mechanism. This cache stores key-value pairs along with their insertion timestamp. Items can be
+  * added,retrieved, and checked for existence. Expired items are automatically removed by a background expiration daemon.
   *
   * @param ttl
   *   The time-to-live duration for items in the cache.
@@ -31,8 +31,8 @@ case class Cache[K, V] private (ttl: Duration):
                 for {
                         now <- Clock.instant()
                         _ <- ZIO.attempt(map.addOne((key, value)))
-                        deamon = ZIO.fromOption(map.remove(key)).orElseFail(new NoSuchElementException).delay(ttl)
-                        _ <- ZIO.unit <&! deamon
+                        deamonDelete = ZIO.fromOption(map.remove(key)).orElseFail(new NoSuchElementException).delay(ttl)
+                        _ <- ZIO.unit <&! deamonDelete
                 } yield ()
 
         /** Retrieves an item from the cache by its key.

@@ -10,10 +10,10 @@ object app extends App:
 trait RestService:
         def fetchUrl(url: URL): Task[String]
 
-        def fetchAllUrlsPar(urls: Seq[URL]) =
+        def fetchAllUrlsPar(urls: Seq[URL]) = { 
                 ZIO.partitionPar(urls) { url =>
                         (ZIO.succeed(url) <*> (fetchUrl(url))).mapError(t => (url, t))
                 }
+        }
 
-        def main = 
-                
+        
