@@ -1,2 +1,2 @@
 # z
-Library built on top of Scala and ZIO
+Utility Library built on top of Scala and ZIO
