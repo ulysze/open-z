@@ -7,10 +7,6 @@ import z.Counter.CounterService
 import scala.util.Try
 import z.Counter.SimpleCounter
 
-/** 
- * Et permet surtout de pouvoir effectuer la construction de SimpleCounter en parralèle sur des fibres possiblement ! (en plus de l'aspect fonctionel  * pure, erreur channel, etc!) -> If the construction of the Counter fail, -> erroe channel handled By FLATMAPS, etc!! + Substitution Model, etc -> The * ONLY way to model, either Stateful or non stateful Data-Structures! -> If State -> Internal + Clear!!!! -> Permet l'ecriture d'un code *toujours pur * car tout est utilisé dans le même Contexte de fonctions, etc! -> C'est ici que nous Utilisons les Instances d'un certain Type,etc. ============>    * Bien sur, possible ensuite de Combiner les Data-Structures (en appelant d'autres effets dans le constructeur, etc -> TOUT EST PURE ET CONCURRENT!)
- * Note : Recursions are authorized and encouraged. But they Must be tailrec.
- * We recommand also using assertions for invariant in the functinons, ensuring, theorem based proving (stainless), etc! -> Ultra-safe Code. Synchronized Ref block the retries as we perform effects ! = Effectful Transaction... -> SUPER POWERFUL! (allows to perform atomic side effectful operations because NO retries!)*/
 
 object LeetCode:
         def twoSum(nums: Array[Int], target: Int) =
@@ -72,41 +68,96 @@ object BoundedQueue:
                         requireZ(size > 0, "Size must be strictly positive") *> Ref.make(Queue.empty[A]).map(_ => SimpleBoundedQueue(size, _))
 
 object CounterManager:
+        /** Unique identifier for a counter. */
         type CounterId = Int
-        trait CounterManagerService:
-                def increment(id: CounterId): UIO[Int]
-                def decrement(id: CounterId): UIO[Int]
-                def get(id: CounterId): UIO[Int]
-                def reset(id: CounterId): UIO[Unit]
-                def remove(id: CounterId): UIO[Unit]
-        
-        case class SimpleCounterManager private(countersRef: Ref.Synchronized[IndexedSeq[CounterService]]) extends CounterManagerService:
-                // show how powerful currying is!
-                private def actionOnSpecificCounter(op: CounterService => => UIO[Int | Unit]): UIO[Int | Unit] = 
-                        countersRef.modifyZIO:
-                                counters => 
-                                        if counters.isDefinedAt(id) then op(counters(id)) <*> ZIO.succeed(counters)
-                                        else ZIO.succeed(0) <*> SimpleCounter.make(0).catchAll(e => ()).map:
-                                                counter => counters ++ counter
 
+        /**
+         * Service for managing counters.
+         */
+        trait CounterManagerService:
+                /**
+                 * Increments the value of the counter identified by `id`.
+                 * @param id Identifier of the counter.
+                 * @return The new value of the counter after incrementing.
+                 */
+                def increment(id: CounterId): UIO[Int]
+
+                /**
+                 * Decrements the value of the counter identified by `id`.
+                 * @param id Identifier of the counter.
+                 * @return The new value of the counter after decrementing.
+                 */
+                def decrement(id: CounterId): UIO[Int]
+
+                /**
+                 * Retrieves the current value of the counter identified by `id`.
+                 * @param id Identifier of the counter.
+                 * @return The current value of the counter.
+                 */
+                def get(id: CounterId): UIO[Int]
+
+                /**
+                 * Resets the counter identified by `id` to zero.
+                 * @param id Identifier of the counter.
+                 */
+                def reset(id: CounterId): UIO[Unit]
+
+                /**
+                 * Removes the counter identified by `id`.
+                 * @param id Identifier of the counter.
+                 */
+                def remove(id: CounterId): UIO[Unit]
+
+        /**
+         * Simple implementation of CounterManager service.
+         * @param countersRef Synchronized reference to an indexed sequence of counter services.
+         */
+        case class SimpleCounterManager private(countersRef: Ref.Synchronized[IndexedSeq[CounterService]]) extends CounterManagerService:
+                /** Performs an operation on a specific counter based on the provided identifier. */
+                private def actionOnSpecificCounter(op: CounterService => UIO[Int]) = 
+                        countersRef.modifyZIO:
+                                counters =>
+                                        if counters.isDefinedAt(id) then op(counters(id)) <*> ZIO.succeed(counters) else ZIO.succeed(0) <*> SimpleCounter.make(0).catchAll:
+                                                e => ()).map(counter => counters ++ counter))
+
+                /** @inheritdoc */
                 def increment(id: CounterId) = actionOnSpecificCounter(_.increment)
+
+                /** @inheritdoc */
                 def decrement(id: CounterId) = actionOnSpecificCounter(_.decrement)
+
+                /** @inheritdoc */
                 def get(id: CounterId) = actionOnSpecificCounter(_.get)
+
+                /** @inheritdoc */
                 def reset(id: CounterId) = actionOnSpecificCounter(_.reset)  
+
+                /**
+                 * Removes the counter identified by `id`.
+                 * @param id Identifier of the counter to remove.
+                 */
                 def remove(id: CounterId) = 
                         countersRef.modifyZIO:
                                 counters => 
-                                        if counters.isDefinedAt(id) then op(counters(id)) <*> ZIO.succeed(counters.remove(id))
-                                        else ZIO.succeed(0) <*> SimpleCounter.make(0).catchAll(e => ()).map:
-                                                counter => 
-                                                        counters ++ counter
-                                                        
-        object SimpleCounterManager:
-                def make(counters: IndexedSeq[CounterService]): IO[IllegalArgumentException, SimpleCounterManager] = 
-                        for {
-                                _ <- requireZ(!counters.isEmpty, "Should provide at least One counter!")
-                                ref <- Ref.Synchronized.make(counters)
-                        } yield SimpleCounterManager(ref)
+                                        if counters.isDefinedAt(id) then ZIO.succeed(()) <*> ZIO.succeed(counters.remove(id)) else ZIO.succeed(0) <*> SimpleCounter.make(0).catchAll:
+                                                e => ()).map(counter => counters ++ counter))
+
+object SimpleCounterManager:
+        /**
+         * Creates a SimpleCounterManager with an initial sequence of counters.
+         * @param counters Initial sequence of counters to manage.
+         * @return A SimpleCounterManager or an error if no counters are provided.
+         */
+        def make(counters: IndexedSeq[CounterService]): IO[IllegalArgumentException, SimpleCounterManager] =
+                for {
+                        _ <- requireZ(!counters.isEmpty, "Should provide at least One counter!")
+                        ref <- Ref.Synchronized.make(counters)
+                } yield SimpleCounterManager(ref)
+
+
+
+        
+
                 
 
                 

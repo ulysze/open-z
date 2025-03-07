@@ -1,3 +1,0 @@
-package z
-
-object Generatorz

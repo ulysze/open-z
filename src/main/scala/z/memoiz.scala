@@ -56,7 +56,6 @@ case class Cache[K, V] private (ttl: Duration):
 /** Companion object for the Cache class. Provides a factory method to create a cache instance with a specified time-to-live (TTL) duration.
   */
 object Cache:
-
         /** Creates a new cache instance with the given time-to-live duration.
           *
           * @param ttl

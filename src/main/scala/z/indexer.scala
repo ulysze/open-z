@@ -5,7 +5,7 @@ import java.io.File
 /**
  * Different modalities with their respective payloads.
  */
-enum Modality{
+enum Modality:
         /**
          * A textual modality carrying a string payload.
          * @param payload The text content.
@@ -29,8 +29,6 @@ enum Modality{
          * @param pos The position in a given space.
          */
         case Physics(pos: Int)
-}
-
 
 /**
  * The state of a web crawling process, tracking visited URLs and encountered errors.
@@ -66,8 +64,7 @@ final case class CrawlState[+E](errors: List[E], visited: Set[URL]){
          * @param error The error to log.
          * @return A new CrawlState with the error added to the list.
          */
-        def logError[E1 >: E](error: E1): CrawlState[E1] =
-                copy(errors = error :: errors)
+        def logError[E1 >: E](error: E1): CrawlState[E1] = copy(errors = error :: errors)
 }
 
 /**
@@ -104,34 +101,39 @@ object CrawlState{
  *      a ZIO effect that, when executed, will perform the crawl and eventually yield a list of errors encountered during processing. The effect requires
  *      an environment of type R with Web and cannot fail (error type Nothing).
  */
-def crawl[R, E](seeds: Set[URL], router: URL => Boolean, processor: URLString => ZIO[R, E, Unit]): ZIO[R with Web, Nothing, List[E]] = {
-        Ref.make[CrawlState[E]](CrawlState.empty).flatMap{ crawlState =>
-                Ref.make(0).flatMap{ ref =>
-                        Promise.make[Nothing, Unit].flatMap{ promise =>
-                                ZIO.acquireReleaseWith(Queue.unbounded[URL])(_.shutdown){ queue =>
-                                        val onDone: ZIO[Any, Nothing, Unit] = ref.modify{ n => if (n == 1) then (queue.shutdown <* promise.succeed(()), 0) else (ZIO.unit, n - 1) 
-                                        }.flatten
-                                        val worker: ZIO[R with Web, Nothing, Unit] = queue.take.flatMap{ url =>
-                                                web.getURL(url).flatMap{ html =>
-                                                        val urls = extractURLs(url, html).filter(router)
+def crawl[R, E](seeds: Set[URL], router: URL => Boolean, processor: URLString => ZIO[R, E, Unit]): ZIO[R with Web, Nothing, List[E]] =
+        Ref.make[CrawlState[E]](CrawlState.empty).flatMap:
+                crawlState =>
+                        Ref.make(0).flatMap:
+                                ref =>
+                                        Promise.make[Nothing, Unit].flatMap:
+                                                promise =>
+                                                        ZIO.acquireReleaseWith(Queue.unbounded[URL])(_.shutdown):
+                                                                queue =>
+                                                                        val onDone: ZIO[Any, Nothing, Unit] = ref.modify: 
+                                                                                n => 
+                                                                                        if (n == 1) then (queue.shutdown <* promise.succeed(()), 0) else (ZIO.unit, n - 1) 
+                                                                        .flatten
+                                                                        val worker: ZIO[R with Web, Nothing, Unit] = queue.take.flatMap:
+                                                                                url =>
+                                                                                        web.getURL(url).flatMap: 
+                                                                                                html =>
+                                                                                                        val urls = extractURLs(url, html).filter(router)
+                                                                                                        for {
+                                                                                                                urls <- crawlState.modify: 
+                                                                                                                state => (urls -- state.visited, state.visitAll(urls))
+                                                                                                                _     <- processor(url, html).catchAll:
+                                                                                                                        e => crawlState.update(_.logError(e))
+                                                                                                                _     <- queue.offerAll(urls)
+                                                                                                                _     <- ref.update(_ + urls.size)
+                                                                                                        } yield ()
+                                                                        .ignore <* onDone
                                                         for {
-                                                                urls <- crawlState.modify{ state => (urls -- state.visited, state.visitAll(urls)) }
-                                                                _     <- processor(url, html).catchAll{ e => crawlState.update(_.logError(e)) }
-                                                                _     <- queue.offerAll(urls)
-                                                                _     <- ref.update(_ + urls.size)
-                                                        } yield ()
-                                                }.ignore <* onDone
-                                        }
-                                        for {
-                                                _     <- crawlState.update(_.visitAll(seeds))
-                                                _     <- ref.update(_ + seeds.size)
-                                                _     <- queue.offerAll(seeds)
-                                                _     <- ZIO.collectAll(ZIO.replicate(100)(worker.forever.fork))
-                                                _     <- promise.await
-                                                state <- crawlState.get
-                                        } yield state.errors
-                                }
-                        }
-                }
-        }
-}
+                                                        _     <- crawlState.update(_.visitAll(seeds))
+                                                        _     <- ref.update(_ + seeds.size)
+                                                        _     <- queue.offerAll(seeds)
+                                                        _     <- ZIO.collectAll(ZIO.replicate(100)(worker.forever.fork))
+                                                        _     <- promise.await
+                                                        state <- crawlState.get
+                                                        } yield state.errors
+end crawl

@@ -9,7 +9,4 @@ object Preconditionz:
           * @return an effect that will fail if the condition is false and will suceed otherwise.
           */
         def requireZ(cond: Boolean, message: String): ZIO[Any, IllegalArgumentException, Unit] =
-                ZIO.when(!cond)(ZIO.fail(new IllegalArgumentException(message))) *> ZIO.unit
-
-        
-        
+                ZIO.when(!cond)(ZIO.fail(new IllegalArgumentException(message))) *> ZIO.Unit
