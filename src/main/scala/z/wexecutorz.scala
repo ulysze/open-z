@@ -34,24 +34,3 @@ object Wexecutors:
                 def aggregate = ???
                 // taille des subdivions = 2. -> Full parralel avec les fibres.
 
-                // nombre d'argument variables mais avec un certain type restreint.
-                // agregate s'implémente possiblement avec une Queue qui divise le travail, ensuite on commence à combiner, etc.
-                // -> Et permettre aussi de regler les paramètre en focntion de la Taille des Fonctions appliués ->
-                // Détermine la taille des divisions pour les SeqOp. parce que la dernière combOp est séquentielle.
-                // -> Naive, mais peut-être rapide -> Toutes le Seq sont des subdivisions de 2. !
-                // -> Pas optimal si lourde charge de travail...
-                // CELA EST Vraiment un pattern très général.
-                // Même si on veut output une autre collection !
-                // Et c'est concurrent car commence à combiner même si les seqOp ne sont pas fini, etc -> Utilise Queue, etc.
-                // Implémentation assez avancée.
-                // Et on veut pouvoir controler, pour chaque fonction, la taille des subdivisions -> Par défaut 2. -> Vraiment FULL
-                // PARALLEL AVEC LES FIBRES.
-
-                // Car fold En parralèle est Obligé de garder le même TYPE!
-                // TODO: ZIO.aggregate(Seq[ZIO])(seqOp, combOp), ZIO.reduceAllPar, etc.
-                // seqOp eq reduce. et ensuite comOp -> Assez complexe sur les types mais SUPER UTILE!
-                // We reason in term of ITERABLE ZIO.
-                // ZIO.fold Also , ZIO.foldLeft, foldRight, etc. -> Super Important quand on travail avec des types.
-
-                // reduce -> fold can change Types -> aggregate allow to fold in parralel + Change types 2 times also..
-                // fold can be used with collectAll.
