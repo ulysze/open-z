@@ -19,9 +19,6 @@ object Wexecutors:
         def collectAllParResults[R, E, A](in: Iterable[ZIO[R, E, A]]) =
                 ZIO.partitionPar(in)(identity)
 
-                // Permettre une MapReduce. -> Mais c'est un cas particulier..
-                // Fournir un controle sur les GROUPES, pour les Operations de chaque Layer, etc!
-                // (la Map est surtout pour faire les Groupes) = Subdivisions utilisées ensuite, etc.
 
                 def simple2DivAggregate[R1 <: R, E1 >: E, A1 >: A](i: Iterable[ZIO[R, E, A]])(nonAsscBinOp: (ZIO[R, E, A], ZIO[R, E, A]) => ZIO[R1, E1, A1])(
                         asscBinOp: (ZIO[R1, E1, A1], ZIO[R1, E1, A1]) => ZIO[R1, E1, A1]
