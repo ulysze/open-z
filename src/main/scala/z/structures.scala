@@ -8,24 +8,8 @@ import scala.util.Try
 import z.Counter.SimpleCounter
 
 
-object LeetCode:
-        def twoSum(nums: Array[Int], target: Int) =
-                nums.zipWithIndex.foldLeft(Map.empty[Int, Int], List.empty[(Int, Int)]):
-                        case ((complements, result), (value, index)) =>
-                                complements.get(target - value) match 
-                                        case Some(complementIndex) => (complements,(complementIndex, index) :: result)
-                                        case None => (complements + (value -> index),result)
-                        ._2.reverse.map(tuple => List(tuple._1, tuple._2)).flatten.toArray
-        
-        def addTwoNumbers(l1: List[Int], l2: List[Int]) =
-                l1.zip(l2).reverse.foldLeft((List.empty[Int], Int)):
-                        case ((result, carry),(x, y)) =>
-                                val sum = x + y
-                                (sum % 10, if sum >= 10 then 1 else 0)
-                ._1.reverse
-
-object Counter:
-        trait CounterService extends Counter:
+object ParCounter:
+        trait CounterService extends ParCounter:
                 def increment: UIO[Int]
                 def decrement: UIO[Int]
                 def get: UIO[Int]
