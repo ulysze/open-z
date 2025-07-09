@@ -2,7 +2,7 @@ package z
 
 import zio._
 
-/** Ulysse E. O. Forest Execution Logic Language Extension with the Abstraction of Tasks/effects for Computers Systems. procedural and ; was cool... Time for an update
+/** Async Execution Logic
   */
 object Wexecutors:
         extension [R, E, A](self: ZIO[R, E, A])
